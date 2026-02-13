@@ -43,3 +43,6 @@ application-prod.yml
 ### Logs ###
 logs/
 *.log
+
+### CLAUDE ###
+CLAUDE.md
