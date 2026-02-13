@@ -1,0 +1,67 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: ApplyFlow
+
+  datasource:
+    url: jdbc:h2:mem:applyflow
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+        dialect: org.hibernate.dialect.H2Dialect
+
+  mail:
+    host: ${MAIL_HOST:smtp.gmail.com}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME:}
+    password: ${MAIL_PASSWORD:}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enabled: true
+
+application:
+  security:
+    jwt:
+      secret-key: ${JWT_SECRET:default-dev-secret-key-do-not-use-in-production-min-256-bits-long-key}
+      expiration: 86400000 # 24 hours
+
+  mail:
+    enabled: false # disable in dev, enable in prod
+
+  rate-limit:
+    requests-per-minute: 30
+    auth-requests-per-minute: 10
+
+  reminder:
+    enabled: false
+    stale-days: 7
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+
+logging:
+  level:
+    com.applyflow: DEBUG
+    org.springframework.security: INFO
