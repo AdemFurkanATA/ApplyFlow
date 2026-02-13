@@ -19,50 +19,52 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AuthService {
 
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
-    private final JwtService jwtService;
-    private final AuthenticationManager authenticationManager;
+        private final UserRepository userRepository;
+        private final PasswordEncoder passwordEncoder;
+        private final JwtService jwtService;
+        private final AuthenticationManager authenticationManager;
+        private final EmailService emailService;
 
-    @Transactional
-    public AuthResponse register(RegisterRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new DuplicateResourceException("Email is already registered");
+        @Transactional
+        public AuthResponse register(RegisterRequest request) {
+                if (userRepository.existsByEmail(request.getEmail())) {
+                        throw new DuplicateResourceException("Email is already registered");
+                }
+
+                User user = User.builder()
+                                .name(request.getName())
+                                .email(request.getEmail().toLowerCase())
+                                .password(passwordEncoder.encode(request.getPassword()))
+                                .role(Role.USER)
+                                .build();
+
+                userRepository.save(user);
+                emailService.sendWelcomeEmail(user.getEmail(), user.getName());
+
+                String token = jwtService.generateToken(user);
+
+                return AuthResponse.builder()
+                                .token(token)
+                                .name(user.getName())
+                                .email(user.getEmail())
+                                .build();
         }
 
-        User user = User.builder()
-                .name(request.getName())
-                .email(request.getEmail().toLowerCase())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .role(Role.USER)
-                .build();
+        public AuthResponse login(LoginRequest request) {
+                authenticationManager.authenticate(
+                                new UsernamePasswordAuthenticationToken(
+                                                request.getEmail().toLowerCase(),
+                                                request.getPassword()));
 
-        userRepository.save(user);
+                User user = userRepository.findByEmail(request.getEmail().toLowerCase())
+                                .orElseThrow(() -> new RuntimeException("User not found"));
 
-        String token = jwtService.generateToken(user);
+                String token = jwtService.generateToken(user);
 
-        return AuthResponse.builder()
-                .token(token)
-                .name(user.getName())
-                .email(user.getEmail())
-                .build();
-    }
-
-    public AuthResponse login(LoginRequest request) {
-        authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getEmail().toLowerCase(),
-                        request.getPassword()));
-
-        User user = userRepository.findByEmail(request.getEmail().toLowerCase())
-                .orElseThrow(() -> new RuntimeException("User not found"));
-
-        String token = jwtService.generateToken(user);
-
-        return AuthResponse.builder()
-                .token(token)
-                .name(user.getName())
-                .email(user.getEmail())
-                .build();
-    }
+                return AuthResponse.builder()
+                                .token(token)
+                                .name(user.getName())
+                                .email(user.getEmail())
+                                .build();
+        }
 }

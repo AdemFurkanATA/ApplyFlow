@@ -28,6 +28,7 @@ public class JobApplicationService {
     private final JobApplicationRepository applicationRepository;
     private final StatusHistoryRepository statusHistoryRepository;
     private final JobApplicationMapper mapper;
+    private final EmailService emailService;
 
     @Transactional
     public JobApplicationResponse create(JobApplicationRequest request, User user) {
@@ -86,6 +87,9 @@ public class JobApplicationService {
             statusHistoryRepository.save(history);
             log.debug("Status changed from {} to {} for application {}",
                     oldStatus, request.getStatus(), id);
+            emailService.sendStatusChangeNotification(
+                    user.getEmail(), application.getCompanyName(),
+                    oldStatus.name(), request.getStatus().name());
         }
 
         application = applicationRepository.save(application);
