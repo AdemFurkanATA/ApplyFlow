@@ -40,7 +40,7 @@ spring:
 application:
   security:
     jwt:
-      secret-key: ${JWT_SECRET:default-dev-secret-key-do-not-use-in-production-min-256-bits-long-key}
+      secret-key: ${JWT_SECRET:bXlzdXBlcnNlY3JldGtleWZvcmRldmVsb3BtZW50b25seWRvbm90dXNlaW5wcm9k}
       expiration: 86400000 # 24 hours
 
   mail:
