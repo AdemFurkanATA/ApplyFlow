@@ -6,12 +6,13 @@ import com.applyflow.entity.StatusHistory;
 import com.applyflow.entity.User;
 import com.applyflow.enums.ApplicationStatus;
 import com.applyflow.exception.ResourceNotFoundException;
-import com.applyflow.exception.UnauthorizedAccessException;
 import com.applyflow.mapper.JobApplicationMapper;
 import com.applyflow.repository.JobApplicationRepository;
 import com.applyflow.repository.StatusHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -31,6 +32,7 @@ public class JobApplicationService {
     private final EmailService emailService;
 
     @Transactional
+    @CacheEvict(value = "userApplications", key = "#user.id")
     public JobApplicationResponse create(JobApplicationRequest request, User user) {
         JobApplication application = mapper.toEntity(request);
         application.setUser(user);
@@ -66,12 +68,14 @@ public class JobApplicationService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = "applications", key = "#id + '_' + #user.id")
     public JobApplicationResponse getById(Long id, User user) {
         JobApplication application = findApplicationByIdAndUser(id, user);
         return mapper.toResponse(application);
     }
 
     @Transactional
+    @CacheEvict(value = { "applications", "userApplications" }, allEntries = true)
     public JobApplicationResponse update(Long id, JobApplicationRequest request, User user) {
         JobApplication application = findApplicationByIdAndUser(id, user);
 
@@ -97,6 +101,7 @@ public class JobApplicationService {
     }
 
     @Transactional
+    @CacheEvict(value = { "applications", "userApplications" }, allEntries = true)
     public void delete(Long id, User user) {
         JobApplication application = findApplicationByIdAndUser(id, user);
         applicationRepository.delete(application);
