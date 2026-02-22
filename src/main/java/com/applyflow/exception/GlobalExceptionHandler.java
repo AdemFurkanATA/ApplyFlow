@@ -69,6 +69,12 @@ public class GlobalExceptionHandler {
         return buildResponse(HttpStatus.BAD_REQUEST, message, request);
     }
 
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(
+            IllegalStateException ex, HttpServletRequest request) {
+        return buildResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), request);
+    }
+
     @ExceptionHandler({ BadCredentialsException.class, AuthenticationException.class })
     public ResponseEntity<ErrorResponse> handleAuthenticationException(
             Exception ex, HttpServletRequest request) {
