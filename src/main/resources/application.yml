@@ -49,7 +49,8 @@ application:
   security:
     jwt:
       secret-key: ${JWT_SECRET:bXlzdXBlcnNlY3JldGtleWZvcmRldmVsb3BtZW50b25seWRvbm90dXNlaW5wcm9k}
-      expiration: 86400000 # 24 hours
+      expiration: 900000 # 15 minutes
+      refresh-expiration: 604800000 # 7 days
 
   mail:
     enabled: false # disable in dev, enable in prod
