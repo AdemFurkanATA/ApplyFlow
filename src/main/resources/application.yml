@@ -56,8 +56,8 @@ application:
     enabled: false # disable in dev, enable in prod
 
   rate-limit:
-    requests-per-minute: 30
-    auth-requests-per-minute: 10
+    requests-per-minute: ${RATE_LIMIT_GLOBAL:100}
+    auth-requests-per-minute: ${RATE_LIMIT_AUTH:5}
 
   reminder:
     enabled: false
