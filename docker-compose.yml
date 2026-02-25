@@ -10,6 +10,10 @@ services:
       DATABASE_USERNAME: applyflow
       DATABASE_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      RATE_LIMIT_GLOBAL: ${RATE_LIMIT_GLOBAL:-100}
+      RATE_LIMIT_AUTH: ${RATE_LIMIT_AUTH:-5}
       MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
       MAIL_PORT: ${MAIL_PORT:-587}
       MAIL_USERNAME: ${MAIL_USERNAME:-}
@@ -19,6 +23,8 @@ services:
       REMINDER_STALE_DAYS: ${REMINDER_STALE_DAYS:-7}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
     networks:
@@ -44,9 +50,25 @@ services:
     networks:
       - applyflow-network
 
+  redis:
+    image: redis:7-alpine
+    container_name: applyflow-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - applyflow-network
+
 volumes:
   postgres-data:
-
+  redis-data:
 
 networks:
   applyflow-network:
