@@ -6,6 +6,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
@@ -35,7 +36,7 @@ public class RateLimitFilter extends OncePerRequestFilter {
     @Value("${application.rate-limit.auth-requests-per-minute}")
     private int authRequestsPerMinute;
 
-    public RateLimitFilter(StringRedisTemplate redisTemplate) {
+    public RateLimitFilter(@Autowired(required = false) StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
         this.objectMapper = new ObjectMapper();
     }
@@ -61,6 +62,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
     private boolean isRateLimited(String key, int limit,
             HttpServletResponse response,
             HttpServletRequest request) throws IOException {
+        if (redisTemplate == null) {
+            return false; // fail-open: no Redis available
+        }
         try {
             Long currentCount = redisTemplate.opsForValue().increment(key);
             if (currentCount == null) {
