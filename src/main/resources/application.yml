@@ -59,6 +59,10 @@ application:
     requests-per-minute: ${RATE_LIMIT_GLOBAL:100}
     auth-requests-per-minute: ${RATE_LIMIT_AUTH:5}
 
+  cache:
+    ttl-seconds: ${CACHE_TTL:60}
+    enabled: ${CACHE_ENABLED:true}
+
   reminder:
     enabled: false
     stale-days: 7
