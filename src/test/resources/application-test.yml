@@ -1,0 +1,65 @@
+server:
+  port: 0 # random port for tests
+
+spring:
+  application:
+    name: ApplyFlow-Test
+
+  datasource:
+    url: jdbc:h2:mem:applyflow-test;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+
+  h2:
+    console:
+      enabled: false
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+
+  mail:
+    host: localhost
+    port: 3025
+    username: test
+    password: test
+
+  data:
+    redis:
+      host: localhost
+      port: 6379
+
+  cache:
+    type: simple
+
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.redis.RedisRepositoriesAutoConfiguration
+
+application:
+  security:
+    jwt:
+      secret-key: bXlzdXBlcnNlY3JldGtleWZvcmRldmVsb3BtZW50b25seWRvbm90dXNlaW5wcm9k
+      expiration: 86400000
+
+  mail:
+    enabled: false
+
+  rate-limit:
+    requests-per-minute: 1000
+    auth-requests-per-minute: 1000
+
+  reminder:
+    enabled: false
+    stale-days: 7
+
+logging:
+  level:
+    com.applyflow: WARN
+    org.springframework.security: WARN
