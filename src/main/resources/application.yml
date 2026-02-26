@@ -69,6 +69,15 @@ springdoc:
     path: /swagger-ui.html
     operations-sorter: method
 
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 logging:
   level:
     com.applyflow: DEBUG
