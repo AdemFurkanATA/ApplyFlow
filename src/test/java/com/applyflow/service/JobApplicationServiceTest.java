@@ -39,159 +39,163 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class JobApplicationServiceTest {
 
-    @Mock
-    private JobApplicationRepository applicationRepository;
+        @Mock
+        private JobApplicationRepository applicationRepository;
 
-    @Mock
-    private StatusHistoryRepository statusHistoryRepository;
+        @Mock
+        private StatusHistoryRepository statusHistoryRepository;
 
-    @Mock
-    private JobApplicationMapper mapper;
+        @Mock
+        private JobApplicationMapper mapper;
 
-    @Mock
-    private EmailService emailService;
+        @Mock
+        private EmailService emailService;
 
-    @InjectMocks
-    private JobApplicationService service;
+        @Mock
+        private com.applyflow.event.AuditEventPublisher auditEventPublisher;
 
-    private User user;
-    private JobApplication application;
-    private JobApplicationRequest request;
-    private JobApplicationResponse response;
+        @InjectMocks
+        private JobApplicationService service;
 
-    @BeforeEach
-    void setUp() {
-        user = User.builder()
-                .id(1L)
-                .name("John Doe")
-                .email("john@example.com")
-                .role(Role.USER)
-                .build();
+        private User user;
+        private JobApplication application;
+        private JobApplicationRequest request;
+        private JobApplicationResponse response;
 
-        application = JobApplication.builder()
-                .id(1L)
-                .companyName("Google")
-                .position("Backend Developer")
-                .status(ApplicationStatus.APPLIED)
-                .applicationDate(LocalDate.now())
-                .salaryExpectation(new BigDecimal("100000"))
-                .user(user)
-                .createdAt(LocalDateTime.now())
-                .updatedAt(LocalDateTime.now())
-                .build();
+        @BeforeEach
+        void setUp() {
+                user = User.builder()
+                                .id(1L)
+                                .name("John Doe")
+                                .email("john@example.com")
+                                .role(Role.USER)
+                                .build();
 
-        request = JobApplicationRequest.builder()
-                .companyName("Google")
-                .position("Backend Developer")
-                .status(ApplicationStatus.APPLIED)
-                .applicationDate(LocalDate.now())
-                .salaryExpectation(new BigDecimal("100000"))
-                .build();
+                application = JobApplication.builder()
+                                .id(1L)
+                                .companyName("Google")
+                                .position("Backend Developer")
+                                .status(ApplicationStatus.APPLIED)
+                                .applicationDate(LocalDate.now())
+                                .salaryExpectation(new BigDecimal("100000"))
+                                .user(user)
+                                .createdAt(LocalDateTime.now())
+                                .updatedAt(LocalDateTime.now())
+                                .build();
 
-        response = JobApplicationResponse.builder()
-                .id(1L)
-                .companyName("Google")
-                .position("Backend Developer")
-                .status(ApplicationStatus.APPLIED)
-                .applicationDate(LocalDate.now())
-                .build();
-    }
+                request = JobApplicationRequest.builder()
+                                .companyName("Google")
+                                .position("Backend Developer")
+                                .status(ApplicationStatus.APPLIED)
+                                .applicationDate(LocalDate.now())
+                                .salaryExpectation(new BigDecimal("100000"))
+                                .build();
 
-    @Test
-    @DisplayName("Should create job application successfully")
-    void create_Success() {
-        when(mapper.toEntity(request)).thenReturn(application);
-        when(applicationRepository.save(any())).thenReturn(application);
-        when(mapper.toResponse(application)).thenReturn(response);
+                response = JobApplicationResponse.builder()
+                                .id(1L)
+                                .companyName("Google")
+                                .position("Backend Developer")
+                                .status(ApplicationStatus.APPLIED)
+                                .applicationDate(LocalDate.now())
+                                .build();
+        }
 
-        JobApplicationResponse result = service.create(request, user);
+        @Test
+        @DisplayName("Should create job application successfully")
+        void create_Success() {
+                when(mapper.toEntity(request)).thenReturn(application);
+                when(applicationRepository.save(any())).thenReturn(application);
+                when(mapper.toResponse(application)).thenReturn(response);
 
-        assertThat(result).isNotNull();
-        assertThat(result.getCompanyName()).isEqualTo("Google");
-        verify(applicationRepository).save(any());
-    }
+                JobApplicationResponse result = service.create(request, user);
 
-    @Test
-    @DisplayName("Should return paginated applications")
-    void getAll_Success() {
-        Pageable pageable = PageRequest.of(0, 10);
-        Page<JobApplication> page = new PageImpl<>(List.of(application), pageable, 1);
+                assertThat(result).isNotNull();
+                assertThat(result.getCompanyName()).isEqualTo("Google");
+                verify(applicationRepository).save(any());
+        }
 
-        when(applicationRepository.findByFilters(eq(user), any(), any(), any(), any(), eq(pageable)))
-                .thenReturn(page);
-        when(mapper.toResponse(any())).thenReturn(response);
+        @Test
+        @DisplayName("Should return paginated applications")
+        void getAll_Success() {
+                Pageable pageable = PageRequest.of(0, 10);
+                Page<JobApplication> page = new PageImpl<>(List.of(application), pageable, 1);
 
-        PagedResponse<JobApplicationResponse> result = service.getAll(
-                user, null, null, null, null, pageable);
+                when(applicationRepository.findByFilters(eq(user), any(), any(), any(), any(), eq(pageable)))
+                                .thenReturn(page);
+                when(mapper.toResponse(any())).thenReturn(response);
 
-        assertThat(result.getContent()).hasSize(1);
-        assertThat(result.getTotalElements()).isEqualTo(1);
-        assertThat(result.isLast()).isTrue();
-    }
+                PagedResponse<JobApplicationResponse> result = service.getAll(
+                                user, null, null, null, null, pageable);
 
-    @Test
-    @DisplayName("Should get application by ID for authorized user")
-    void getById_Success() {
-        when(applicationRepository.findByIdAndUser(1L, user)).thenReturn(Optional.of(application));
-        when(mapper.toResponse(application)).thenReturn(response);
+                assertThat(result.getContent()).hasSize(1);
+                assertThat(result.getTotalElements()).isEqualTo(1);
+                assertThat(result.isLast()).isTrue();
+        }
 
-        JobApplicationResponse result = service.getById(1L, user);
+        @Test
+        @DisplayName("Should get application by ID for authorized user")
+        void getById_Success() {
+                when(applicationRepository.findByIdAndUser(1L, user)).thenReturn(Optional.of(application));
+                when(mapper.toResponse(application)).thenReturn(response);
 
-        assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(1L);
-    }
+                JobApplicationResponse result = service.getById(1L, user);
 
-    @Test
-    @DisplayName("Should throw ResourceNotFoundException for non-existent application")
-    void getById_NotFound() {
-        when(applicationRepository.findByIdAndUser(99L, user)).thenReturn(Optional.empty());
+                assertThat(result).isNotNull();
+                assertThat(result.getId()).isEqualTo(1L);
+        }
 
-        assertThatThrownBy(() -> service.getById(99L, user))
-                .isInstanceOf(ResourceNotFoundException.class)
-                .hasMessageContaining("99");
-    }
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException for non-existent application")
+        void getById_NotFound() {
+                when(applicationRepository.findByIdAndUser(99L, user)).thenReturn(Optional.empty());
 
-    @Test
-    @DisplayName("Should update application and track status change")
-    void update_WithStatusChange() {
-        JobApplicationRequest updateRequest = JobApplicationRequest.builder()
-                .companyName("Google")
-                .position("Backend Developer")
-                .status(ApplicationStatus.INTERVIEW)
-                .applicationDate(LocalDate.now())
-                .build();
+                assertThatThrownBy(() -> service.getById(99L, user))
+                                .isInstanceOf(ResourceNotFoundException.class)
+                                .hasMessageContaining("99");
+        }
 
-        when(applicationRepository.findByIdAndUser(1L, user)).thenReturn(Optional.of(application));
-        doNothing().when(mapper).updateEntity(any(), any());
-        when(applicationRepository.save(any())).thenReturn(application);
-        when(mapper.toResponse(any())).thenReturn(response);
-        when(statusHistoryRepository.save(any())).thenReturn(StatusHistory.builder().build());
-        doNothing().when(emailService).sendStatusChangeNotification(anyString(), anyString(), anyString(), anyString());
+        @Test
+        @DisplayName("Should update application and track status change")
+        void update_WithStatusChange() {
+                JobApplicationRequest updateRequest = JobApplicationRequest.builder()
+                                .companyName("Google")
+                                .position("Backend Developer")
+                                .status(ApplicationStatus.INTERVIEW)
+                                .applicationDate(LocalDate.now())
+                                .build();
 
-        service.update(1L, updateRequest, user);
+                when(applicationRepository.findByIdAndUser(1L, user)).thenReturn(Optional.of(application));
+                doNothing().when(mapper).updateEntity(any(), any());
+                when(applicationRepository.save(any())).thenReturn(application);
+                when(mapper.toResponse(any())).thenReturn(response);
+                when(statusHistoryRepository.save(any())).thenReturn(StatusHistory.builder().build());
+                doNothing().when(emailService).sendStatusChangeNotification(anyString(), anyString(), anyString(),
+                                anyString());
 
-        verify(statusHistoryRepository).save(any(StatusHistory.class));
-        verify(emailService).sendStatusChangeNotification(
-                eq(user.getEmail()), eq("Google"),
-                eq("APPLIED"), eq("INTERVIEW"));
-    }
+                service.update(1L, updateRequest, user);
 
-    @Test
-    @DisplayName("Should delete application for authorized user")
-    void delete_Success() {
-        when(applicationRepository.findByIdAndUser(1L, user)).thenReturn(Optional.of(application));
+                verify(statusHistoryRepository).save(any(StatusHistory.class));
+                verify(emailService).sendStatusChangeNotification(
+                                eq(user.getEmail()), eq("Google"),
+                                eq("APPLIED"), eq("INTERVIEW"));
+        }
 
-        service.delete(1L, user);
+        @Test
+        @DisplayName("Should delete application for authorized user")
+        void delete_Success() {
+                when(applicationRepository.findByIdAndUser(1L, user)).thenReturn(Optional.of(application));
 
-        verify(applicationRepository).delete(application);
-    }
+                service.delete(1L, user);
 
-    @Test
-    @DisplayName("Should throw ResourceNotFoundException when deleting non-existent application")
-    void delete_NotFound() {
-        when(applicationRepository.findByIdAndUser(99L, user)).thenReturn(Optional.empty());
+                verify(applicationRepository).delete(application);
+        }
 
-        assertThatThrownBy(() -> service.delete(99L, user))
-                .isInstanceOf(ResourceNotFoundException.class);
-    }
+        @Test
+        @DisplayName("Should throw ResourceNotFoundException when deleting non-existent application")
+        void delete_NotFound() {
+                when(applicationRepository.findByIdAndUser(99L, user)).thenReturn(Optional.empty());
+
+                assertThatThrownBy(() -> service.delete(99L, user))
+                                .isInstanceOf(ResourceNotFoundException.class);
+        }
 }

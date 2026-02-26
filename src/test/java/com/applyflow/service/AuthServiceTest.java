@@ -7,6 +7,7 @@ import com.applyflow.dto.RegisterRequest;
 import com.applyflow.entity.RefreshToken;
 import com.applyflow.entity.User;
 import com.applyflow.enums.Role;
+import com.applyflow.event.AuditEventPublisher;
 import com.applyflow.exception.DuplicateResourceException;
 import com.applyflow.exception.ResourceNotFoundException;
 import com.applyflow.repository.RefreshTokenRepository;
@@ -53,6 +54,9 @@ class AuthServiceTest {
 
     @Mock
     private EmailService emailService;
+
+    @Mock
+    private AuditEventPublisher auditEventPublisher;
 
     @InjectMocks
     private AuthService authService;
