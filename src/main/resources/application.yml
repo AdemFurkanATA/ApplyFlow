@@ -58,6 +58,10 @@ application:
     requests-per-minute: 30
     auth-requests-per-minute: 10
 
+  cache:
+    ttl-seconds: ${CACHE_TTL:60}
+    enabled: ${CACHE_ENABLED:true}
+
   reminder:
     enabled: false
     stale-days: 7
