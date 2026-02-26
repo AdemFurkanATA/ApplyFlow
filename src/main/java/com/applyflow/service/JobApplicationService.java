@@ -6,6 +6,7 @@ import com.applyflow.entity.StatusHistory;
 import com.applyflow.entity.User;
 import com.applyflow.enums.ApplicationStatus;
 import com.applyflow.exception.ResourceNotFoundException;
+import com.applyflow.event.AuditEventPublisher;
 import com.applyflow.mapper.JobApplicationMapper;
 import com.applyflow.repository.JobApplicationRepository;
 import com.applyflow.repository.StatusHistoryRepository;
@@ -30,6 +31,7 @@ public class JobApplicationService {
     private final StatusHistoryRepository statusHistoryRepository;
     private final JobApplicationMapper mapper;
     private final EmailService emailService;
+    private final AuditEventPublisher auditEventPublisher;
 
     @Transactional
     @CacheEvict(value = "userApplications", key = "#user.id")
@@ -38,6 +40,9 @@ public class JobApplicationService {
         application.setUser(user);
         application = applicationRepository.save(application);
         log.debug("Created job application {} for user {}", application.getId(), user.getId());
+        auditEventPublisher.publish(
+                com.applyflow.enums.AuditEventType.JOB_CREATED,
+                user.getId(), application.getId());
         return mapper.toResponse(application);
     }
 
@@ -94,9 +99,16 @@ public class JobApplicationService {
             emailService.sendStatusChangeNotification(
                     user.getEmail(), application.getCompanyName(),
                     oldStatus.name(), request.getStatus().name());
+            auditEventPublisher.publish(
+                    com.applyflow.enums.AuditEventType.JOB_STATUS_CHANGED,
+                    user.getId(), id,
+                    oldStatus.name() + " -> " + request.getStatus().name());
         }
 
         application = applicationRepository.save(application);
+        auditEventPublisher.publish(
+                com.applyflow.enums.AuditEventType.JOB_UPDATED,
+                user.getId(), id);
         return mapper.toResponse(application);
     }
 
@@ -106,6 +118,9 @@ public class JobApplicationService {
         JobApplication application = findApplicationByIdAndUser(id, user);
         applicationRepository.delete(application);
         log.debug("Deleted job application {} for user {}", id, user.getId());
+        auditEventPublisher.publish(
+                com.applyflow.enums.AuditEventType.JOB_DELETED,
+                user.getId(), id);
     }
 
     @Transactional(readOnly = true)

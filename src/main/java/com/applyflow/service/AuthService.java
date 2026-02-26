@@ -4,7 +4,9 @@ import com.applyflow.dto.AuthResponse;
 import com.applyflow.dto.LoginRequest;
 import com.applyflow.dto.RegisterRequest;
 import com.applyflow.entity.User;
+import com.applyflow.enums.AuditEventType;
 import com.applyflow.enums.Role;
+import com.applyflow.event.AuditEventPublisher;
 import com.applyflow.exception.DuplicateResourceException;
 import com.applyflow.repository.UserRepository;
 import com.applyflow.security.JwtService;
@@ -24,6 +26,7 @@ public class AuthService {
         private final JwtService jwtService;
         private final AuthenticationManager authenticationManager;
         private final EmailService emailService;
+        private final AuditEventPublisher auditEventPublisher;
 
         @Transactional
         public AuthResponse register(RegisterRequest request) {
@@ -40,6 +43,7 @@ public class AuthService {
 
                 userRepository.save(user);
                 emailService.sendWelcomeEmail(user.getEmail(), user.getName());
+                auditEventPublisher.publish(AuditEventType.USER_REGISTERED, user.getId());
 
                 String token = jwtService.generateToken(user);
 
@@ -60,6 +64,7 @@ public class AuthService {
                                 .orElseThrow(() -> new RuntimeException("User not found"));
 
                 String token = jwtService.generateToken(user);
+                auditEventPublisher.publish(AuditEventType.USER_LOGGED_IN, user.getId());
 
                 return AuthResponse.builder()
                                 .token(token)
