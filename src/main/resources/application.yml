@@ -49,14 +49,19 @@ application:
   security:
     jwt:
       secret-key: ${JWT_SECRET:bXlzdXBlcnNlY3JldGtleWZvcmRldmVsb3BtZW50b25seWRvbm90dXNlaW5wcm9k}
-      expiration: 86400000 # 24 hours
+      expiration: 900000 # 15 minutes
+      refresh-expiration: 604800000 # 7 days
 
   mail:
     enabled: false # disable in dev, enable in prod
 
   rate-limit:
-    requests-per-minute: 30
-    auth-requests-per-minute: 10
+    requests-per-minute: ${RATE_LIMIT_GLOBAL:100}
+    auth-requests-per-minute: ${RATE_LIMIT_AUTH:5}
+
+  cache:
+    ttl-seconds: ${CACHE_TTL:60}
+    enabled: ${CACHE_ENABLED:true}
 
   reminder:
     enabled: false
@@ -68,6 +73,15 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     operations-sorter: method
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
 
 logging:
   level:
